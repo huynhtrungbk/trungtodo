@@ -16,6 +16,7 @@ export interface Todo {
     completed: boolean;   // Trạng thái: true = đã hoàn thành
     createdAt: Date;      // Thời gian tạo
     updatedAt: Date;      // Thời gian cập nhật cuối
+    deletedAt?: Date | null; // Thời gian xóa (optional)
 }
 
 // ============================================

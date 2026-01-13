@@ -7,179 +7,173 @@
  * - Truyền data xuống các component con
  */
 
-'use client'; // ⚠️ Client Component vì dùng hooks
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Todo } from '@/types/todo';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
-import ConfirmModal from './ConfirmModal';  // 👈 Import modal mới
+import ConfirmModal from './ConfirmModal';
+import DeletedTodoItem from './DeletedTodoItem'; // 👈 Import mới
+import HistoryModal from './HistoryModal';       // 👈 Import mới
 
 export default function TodoList() {
 
     // ============================================
-    // 1️⃣ STATE: Quản lý dữ liệu
+    // 1️⃣ STATE
     // ============================================
-    const [todos, setTodos] = useState<Todo[]>([]);     // Danh sách todos
-    const [loading, setLoading] = useState(true);        // Đang tải?
-    const [error, setError] = useState<string | null>(null);  // Lỗi (nếu có)
+    const [todos, setTodos] = useState<Todo[]>([]);          // Active todos
+    const [recentTodos, setRecentTodos] = useState<Todo[]>([]); // Recently deleted
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // State cho modal xác nhận xóa
+    // Modal states
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [todoIdToDelete, setTodoIdToDelete] = useState<number | null>(null);
+    const [historyModalOpen, setHistoryModalOpen] = useState(false); // 👈 State cho modal lịch sử
 
     // ============================================
-    // 2️⃣ useEffect: Chạy khi component MOUNT (hiển thị lần đầu)
+    // 2️⃣ EFFECT
     // ============================================
     useEffect(() => {
-        fetchTodos();  // Gọi API lấy danh sách todos
-    }, []);  // [] = chỉ chạy 1 lần khi mount
+        fetchAllData();
+    }, []);
 
-    // ============================================
-    // 3️⃣ Hàm gọi API lấy danh sách todos
-    // ============================================
-    const fetchTodos = async () => {
+    const fetchAllData = async () => {
+        setLoading(true);
         try {
-            setLoading(true);                              // Bắt đầu loading
-            const response = await fetch('/api/todos');     // Gọi API
-
-            if (!response.ok) {
-                throw new Error('Không thể tải danh sách todos');
-            }
-
-            const data = await response.json();            // Parse JSON
-            setTodos(data);                                // Cập nhật state
+            await Promise.all([
+                fetchTodos(),
+                fetchRecentDeleted()
+            ]);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+            setError('Có lỗi khi tải dữ liệu');
         } finally {
-            setLoading(false);                             // Kết thúc loading
+            setLoading(false);
         }
     };
 
+    // Lấy danh sách đang active
+    const fetchTodos = async () => {
+        const res = await fetch('/api/todos?status=active');
+        if (res.ok) setTodos(await res.json());
+    };
+
+    // Lấy danh sách vừa xóa (3 ngày)
+    const fetchRecentDeleted = async () => {
+        const res = await fetch('/api/todos?status=recent');
+        if (res.ok) setRecentTodos(await res.json());
+    };
+
     // ============================================
-    // 4️⃣ Hàm thêm todo mới
+    // 3️⃣ HANDLERS
     // ============================================
     const handleAddTodo = async (title: string) => {
         try {
             const response = await fetch('/api/todos', {
-                method: 'POST',                              // HTTP POST
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, completed: false }),  // Data gửi đi
+                body: JSON.stringify({ title, completed: false }),
             });
-
-            if (!response.ok) {
-                throw new Error('Không thể thêm todo');
+            if (response.ok) {
+                const newTodo = await response.json();
+                setTodos([newTodo, ...todos]);
             }
-
-            const newTodo = await response.json();
-            setTodos([newTodo, ...todos]);                 // Thêm vào đầu danh sách
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+            alert('Lỗi thêm todo');
         }
     };
 
-    // ============================================
-    // 5️⃣ Hàm toggle trạng thái completed
-    // ============================================
     const handleToggle = async (id: number) => {
-        const todo = todos.find(t => t.id === id);       // Tìm todo cần update
+        const todo = todos.find(t => t.id === id);
         if (!todo) return;
 
         try {
             const response = await fetch(`/api/todos/${id}`, {
-                method: 'PATCH',                             // HTTP PATCH = update một phần
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ completed: !todo.completed }),  // Đảo ngược trạng thái
+                body: JSON.stringify({ completed: !todo.completed }),
             });
-
-            if (!response.ok) {
-                throw new Error('Không thể cập nhật todo');
+            if (response.ok) {
+                const updatedTodo = await response.json();
+                setTodos(todos.map(t => t.id === id ? updatedTodo : t));
             }
-
-            const updatedTodo = await response.json();
-            // Cập nhật state: thay todo cũ bằng todo mới
-            setTodos(todos.map(t => t.id === id ? updatedTodo : t));
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+            alert('Lỗi cập nhật');
         }
     };
 
-    // ============================================
-    // 6️⃣ Hàm mở modal xác nhận xóa
-    // ============================================
     const handleDeleteClick = (id: number) => {
-        setTodoIdToDelete(id);      // Lưu ID todo cần xóa
-        setDeleteModalOpen(true);   // Mở modal
+        setTodoIdToDelete(id);
+        setDeleteModalOpen(true);
     };
 
-    // ============================================
-    // 7️⃣ Hàm xác nhận xóa (gọi khi click "Xác nhận" trong modal)
-    // ============================================
     const handleConfirmDelete = async () => {
         if (todoIdToDelete === null) return;
-
         try {
             const response = await fetch(`/api/todos/${todoIdToDelete}`, {
                 method: 'DELETE',
             });
+            if (response.ok) {
+                // Xóa khỏi danh sách active
+                const deletedTodo = todos.find(t => t.id === todoIdToDelete);
+                setTodos(todos.filter(t => t.id !== todoIdToDelete));
 
-            if (!response.ok) {
-                throw new Error('Không thể xóa todo');
+                // Thêm vào danh sách recent (giả lập UI luôn cho nhanh)
+                if (deletedTodo) {
+                    const now = new Date();
+                    setRecentTodos([{ ...deletedTodo, deletedAt: now }, ...recentTodos]);
+                }
+
+                // Hoặc gọi lại fetchRecentDeleted() để chắc chắn đồng bộ server
+                // fetchRecentDeleted();
             }
-
-            // Cập nhật state: lọc bỏ todo đã xóa
-            setTodos(todos.filter(t => t.id !== todoIdToDelete));
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+            alert('Lỗi xóa todo');
         } finally {
-            // Đóng modal và reset state
             setDeleteModalOpen(false);
             setTodoIdToDelete(null);
         }
     };
 
-    // ============================================
-    // 8️⃣ Hàm hủy xóa (đóng modal)
-    // ============================================
     const handleCancelDelete = () => {
         setDeleteModalOpen(false);
         setTodoIdToDelete(null);
     };
 
     // ============================================
-    // 9️⃣ RENDER UI
+    // 4️⃣ RENDER
     // ============================================
+    if (loading) return <div style={{ textAlign: 'center', padding: '40px' }}>⏳ Đang tải...</div>;
+    if (error) return <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>❌ {error}</div>;
 
-    // Hiển thị loading
-    if (loading) {
-        return (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-                <p>⏳ Đang tải...</p>
-            </div>
-        );
-    }
-
-    // Hiển thị lỗi
-    if (error) {
-        return (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
-                <p>❌ {error}</p>
-                <button onClick={fetchTodos}>Thử lại</button>
-            </div>
-        );
-    }
-
-    // Hiển thị danh sách
     return (
         <div>
-            {/* Form thêm todo */}
+            {/* Header phụ với nút Lịch sử */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                <button
+                    onClick={() => setHistoryModalOpen(true)}
+                    style={{
+                        padding: '6px 12px',
+                        fontSize: '14px',
+                        backgroundColor: '#6c757d',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    📜 Lịch sử cũ
+                </button>
+            </div>
+
             <AddTodo onAdd={handleAddTodo} />
 
-            {/* Danh sách todos */}
+            {/* DANH SÁCH CHÍNH */}
             <ul style={{ listStyle: 'none', padding: 0 }}>
                 {todos.length === 0 ? (
                     <li style={{ textAlign: 'center', color: '#6c757d', padding: '40px' }}>
-                        📝 Chưa có việc gì cần làm. Thêm việc mới nhé!
+                        📝 Chưa có việc gì cần làm.
                     </li>
                 ) : (
                     todos.map(todo => (
@@ -187,11 +181,31 @@ export default function TodoList() {
                             key={todo.id}
                             todo={todo}
                             onToggle={handleToggle}
-                            onDelete={handleDeleteClick}  // 👈 Gọi hàm mở modal
+                            onDelete={handleDeleteClick}
                         />
                     ))
                 )}
             </ul>
+
+            {/* DANH SÁCH VỪA XÓA (RECENTLY DELETED BOX) */}
+            {recentTodos.length > 0 && (
+                <div style={{ marginTop: '40px' }}>
+                    <h3 style={{
+                        fontSize: '18px',
+                        color: '#495057',
+                        borderBottom: '2px solid #dee2e6',
+                        paddingBottom: '8px',
+                        marginBottom: '16px'
+                    }}>
+                        🗑️ Vừa xóa gần đây (Lưu 3 ngày)
+                    </h3>
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                        {recentTodos.map(todo => (
+                            <DeletedTodoItem key={todo.id} todo={todo} />
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {/* Thống kê */}
             {todos.length > 0 && (
@@ -202,19 +216,22 @@ export default function TodoList() {
                     borderRadius: '8px',
                     textAlign: 'center',
                 }}>
-                    <p>
-                        ✅ Hoàn thành: {todos.filter(t => t.completed).length} / {todos.length}
-                    </p>
+                    <p>✅ Hoàn thành: {todos.filter(t => t.completed).length} / {todos.length}</p>
                 </div>
             )}
 
-            {/* 🔔 Modal xác nhận xóa */}
+            {/* Modals */}
             <ConfirmModal
                 isOpen={deleteModalOpen}
                 title="Xác nhận xóa"
-                message="Bạn có chắc chắn muốn xóa công việc này không?"
+                message="Công việc này sẽ được chuyển vào mục 'Vừa xóa'."
                 onConfirm={handleConfirmDelete}
                 onCancel={handleCancelDelete}
+            />
+
+            <HistoryModal
+                isOpen={historyModalOpen}
+                onClose={() => setHistoryModalOpen(false)}
             />
         </div>
     );

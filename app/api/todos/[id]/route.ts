@@ -73,7 +73,10 @@ export async function PATCH(
 
         // prisma.todo.update() = UPDATE "Todo" SET ... WHERE id = ?
         const updatedTodo = await prisma.todo.update({
-            where: { id: todoId },
+            where: {
+                id: todoId,
+                deletedAt: null  // 🛡️ Chỉ update nếu chưa bị xóa
+            },
             data: {
                 // Chỉ update các field được gửi lên
                 ...(body.title !== undefined && { title: body.title }),
@@ -120,9 +123,13 @@ export async function DELETE(
     }
 
     try {
-        // prisma.todo.delete() = DELETE FROM "Todo" WHERE id = ?
-        await prisma.todo.delete({
+        // SOFT DELETE: Không xóa hẳn, chỉ đánh dấu ngày xóa
+        // prisma.todo.update()
+        await prisma.todo.update({
             where: { id: todoId },
+            data: {
+                deletedAt: new Date(),
+            },
         });
 
         // 204 No Content = thành công, không có body

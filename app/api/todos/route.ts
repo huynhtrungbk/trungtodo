@@ -10,13 +10,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';  // 👈 Import Prisma client
 
 // ============================================
-// 📥 GET /api/todos - Lấy danh sách todos từ database
+// 📥 GET /api/todos - Lấy danh sách todos
+// Supported status: 'active' | 'recent' | 'archived'
 // ============================================
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        // 🔍 prisma.todo.findMany() = SELECT * FROM "Todo"
-        // orderBy: sắp xếp theo createdAt giảm dần (mới nhất trước)
+        const searchParams = request.nextUrl.searchParams;
+        const status = searchParams.get('status') || 'active';
+
+        let whereClause = {};
+
+        // Logic lọc theo yêu cầu mới (3 ngày)
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+        switch (status) {
+            case 'recent':
+                // Lấy các mục đã xóa trong 3 ngày qua
+                whereClause = {
+                    deletedAt: {
+                        not: null,           // Đã xóa
+                        gte: threeDaysAgo,   // Trong vòng 3 ngày
+                    }
+                };
+                break;
+            case 'archived':
+                // Lấy các mục đã xóa quá 3 ngày
+                whereClause = {
+                    deletedAt: {
+                        lt: threeDaysAgo,    // Cũ hơn 3 ngày
+                    }
+                };
+                break;
+            case 'active':
+            default:
+                // Mặc định: Chỉ lấy mục chưa xóa
+                whereClause = { deletedAt: null };
+                break;
+        }
+
+        // 🔍 prisma.todo.findMany
         const todos = await prisma.todo.findMany({
+            where: whereClause,
             orderBy: {
                 createdAt: 'desc',
             },

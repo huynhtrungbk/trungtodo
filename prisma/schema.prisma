@@ -53,4 +53,9 @@ model Todo {
   // 📅 updatedAt: Thời gian cập nhật
   // @updatedAt = tự động cập nhật khi record thay đổi
   updatedAt DateTime @updatedAt
+
+  // 🗑️ deletedAt: Thời gian xóa (Soft Delete)
+  // null = chưa xóa
+  // có giá trị = đã xóa
+  deletedAt DateTime?
 }
