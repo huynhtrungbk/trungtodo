@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://admin:admin123@host.docker.internal:5432/todo_db
+      - DATABASE_URL=${DATABASE_URL}
       - NODE_ENV=production
     extra_hosts:
       - "host.docker.internal:host-gateway"
