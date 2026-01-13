@@ -1,0 +1,56 @@
+// ============================================
+// 📦 prisma/schema.prisma - Database Schema
+// ============================================
+// File này định nghĩa CẤU TRÚC database
+// Prisma sẽ đọc file này và:
+// 1. Tạo bảng trong PostgreSQL
+// 2. Sinh ra TypeScript types
+// 3. Tạo Prisma Client để query
+
+// ============================================
+// 1️⃣ Generator - Cấu hình sinh code
+// ============================================
+generator client {
+  provider = "prisma-client-js"  // Sinh JavaScript client
+}
+
+// ============================================
+// 2️⃣ Datasource - Cấu hình database
+// ============================================
+// Prisma 7+: URL được cấu hình trong prisma.config.ts
+// Không cần khai báo url ở đây nữa
+datasource db {
+  provider = "postgresql"         // Loại database
+}
+
+// ============================================
+// 3️⃣ Model Todo - Định nghĩa bảng todos
+// ============================================
+// Mỗi model = 1 bảng trong database
+// Mỗi field = 1 cột trong bảng
+
+model Todo {
+  // 🔑 id: Khóa chính, tự động tăng
+  // @id         = đánh dấu là primary key
+  // @default()  = giá trị mặc định
+  // autoincrement() = tự động tăng 1, 2, 3...
+  id        Int      @id @default(autoincrement())
+
+  // 📝 title: Tiêu đề todo
+  // String   = kiểu chuỗi (VARCHAR trong SQL)
+  title     String
+
+  // ✅ completed: Trạng thái hoàn thành
+  // Boolean  = true/false
+  // @default(false) = mặc định là false
+  completed Boolean  @default(false)
+
+  // 📅 createdAt: Thời gian tạo
+  // DateTime = kiểu ngày giờ
+  // @default(now()) = mặc định là thời điểm hiện tại
+  createdAt DateTime @default(now())
+
+  // 📅 updatedAt: Thời gian cập nhật
+  // @updatedAt = tự động cập nhật khi record thay đổi
+  updatedAt DateTime @updatedAt
+}
