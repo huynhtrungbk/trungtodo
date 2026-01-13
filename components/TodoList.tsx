@@ -149,23 +149,7 @@ export default function TodoList() {
 
     return (
         <div>
-            {/* Header phụ với nút Lịch sử */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                <button
-                    onClick={() => setHistoryModalOpen(true)}
-                    style={{
-                        padding: '6px 12px',
-                        fontSize: '14px',
-                        backgroundColor: '#6c757d',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    📜 Lịch sử cũ
-                </button>
-            </div>
+
 
             <AddTodo onAdd={handleAddTodo} />
 
@@ -187,25 +171,7 @@ export default function TodoList() {
                 )}
             </ul>
 
-            {/* DANH SÁCH VỪA XÓA (RECENTLY DELETED BOX) */}
-            {recentTodos.length > 0 && (
-                <div style={{ marginTop: '40px' }}>
-                    <h3 style={{
-                        fontSize: '18px',
-                        color: '#495057',
-                        borderBottom: '2px solid #dee2e6',
-                        paddingBottom: '8px',
-                        marginBottom: '16px'
-                    }}>
-                        🗑️ Vừa xóa gần đây (Lưu 3 ngày)
-                    </h3>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {recentTodos.map(todo => (
-                            <DeletedTodoItem key={todo.id} todo={todo} />
-                        ))}
-                    </ul>
-                </div>
-            )}
+
 
             {/* Thống kê */}
             {todos.length > 0 && (
@@ -217,6 +183,72 @@ export default function TodoList() {
                     textAlign: 'center',
                 }}>
                     <p>✅ Hoàn thành: {todos.filter(t => t.completed).length} / {todos.length}</p>
+                </div>
+            )}
+
+            {/* DANH SÁCH VỪA XÓA (RECENTLY DELETED BOX) */}
+            {recentTodos.length > 0 && (
+                <div style={{
+                    marginTop: '20px',
+                    backgroundColor: '#fff5f5',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: '1px dashed #ffc9c9'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h3 style={{
+                            fontSize: '16px',
+                            color: '#dc3545',
+                            margin: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            🗑️ Vừa xóa gần đây <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#666' }}>(Lưu 3 ngày)</span>
+                        </h3>
+
+                        <button
+                            onClick={() => setHistoryModalOpen(true)}
+                            style={{
+                                padding: '4px 10px',
+                                fontSize: '12px',
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            📜 Lịch sử cũ
+                        </button>
+                    </div>
+
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                        {recentTodos.map(todo => (
+                            <DeletedTodoItem key={todo.id} todo={todo} />
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {recentTodos.length === 0 && (
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button
+                        onClick={() => setHistoryModalOpen(true)}
+                        style={{
+                            color: '#6c757d',
+                            fontSize: '14px',
+                            background: 'none',
+                            border: 'none',
+                            textDecoration: 'underline',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        📜 Xem lịch sử cũ
+                    </button>
                 </div>
             )}
 

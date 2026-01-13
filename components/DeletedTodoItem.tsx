@@ -24,20 +24,31 @@ export default function DeletedTodoItem({ todo }: DeletedTodoItemProps) {
             marginBottom: '8px',
             opacity: 0.8, // Làm mờ nhẹ
         }}>
-            {/* 1️⃣ Icon thùng rác */}
-            <span style={{ fontSize: '18px' }}>🗑️</span>
+            {/* 1️⃣ Checkbox hiển thị trạng thái (Disabled) */}
+            <input
+                type="checkbox"
+                checked={todo.completed}
+                readOnly
+                disabled
+                style={{
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'not-allowed',
+                    opacity: 0.6
+                }}
+            />
 
             {/* 2️⃣ Nội dung */}
             <div style={{ flex: 1 }}>
                 <span style={{
                     display: 'block',
-                    textDecoration: 'line-through',
+                    textDecoration: todo.completed ? 'line-through' : 'none',
                     color: '#6c757d',
                 }}>
                     {todo.title}
                 </span>
-                <span style={{ fontSize: '12px', color: '#dc3545' }}>
-                    Đã xóa: {deletedDate}
+                <span style={{ fontSize: '12px', color: '#dc3545', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    🗑️ Đã xóa: {deletedDate}
                 </span>
             </div>
         </li>
