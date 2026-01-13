@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  todo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: todo-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@host.docker.internal:5432/todo_db
+      - NODE_ENV=production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    driver: bridge
