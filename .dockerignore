@@ -1,0 +1,34 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js build output
+.next
+out
+
+# Environment files
+.env*
+
+# Development files
+.git
+.gitignore
+README.md
+*.md
+
+# Internal documentation (private - never deploy)
+docs/
+app/local-docs
+
+# IDE
+.vscode
+.idea
+
+# Testing
+coverage
+__tests__
+
+# Misc
+.DS_Store
+*.pem
